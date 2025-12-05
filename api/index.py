@@ -1,13 +1,22 @@
 import os, json, time, base64, hashlib, hmac
 from flask import Flask, request, Response
 
-from store import (
-  seed_defaults_if_needed, storage_mode,
-  get_menu, get_promos, set_promos,
-  list_orders, create_order, get_order, update_status,
-  upsert_product, upsert_user, public_users_view,
-  find_user, daily_report
-)
+try:
+  from api.store import (
+    seed_defaults_if_needed, storage_mode,
+    get_menu, get_promos, set_promos,
+    list_orders, create_order, get_order, update_status,
+    upsert_product, upsert_user, public_users_view,
+    find_user, daily_report
+  )
+except Exception:
+  from store import (
+    seed_defaults_if_needed, storage_mode,
+    get_menu, get_promos, set_promos,
+    list_orders, create_order, get_order, update_status,
+    upsert_product, upsert_user, public_users_view,
+    find_user, daily_report
+  )
 
 app = Flask(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me").encode("utf-8")
