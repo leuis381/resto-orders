@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resto Orders — Cocina</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Resto Orders</h1>
+        <small>Panel Cocina</small>
+      </div>
+    </div>
+    <div class="pill">
+      <span class="badge" id="netBadge">—</span>
+      <span class="badge" id="meBadge">—</span>
+      <a class="badge" href="/index.html">Cliente</a>
+      <a class="badge" href="/admin.html">Admin</a>
+      <button id="logout" class="btn secondary" style="padding:6px 10px">Salir</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="cardHeader">
+        <h2>Pedidos</h2>
+        <div class="controls">
+          <select id="filter" class="select">
+            <option value="">Todos</option>
+            <option value="PENDING">Recibidos</option>
+            <option value="PREPARING">En preparación</option>
+            <option value="READY">Listos</option>
+            <option value="DONE">Entregados</option>
+            <option value="CANCELED">Cancelados</option>
+          </select>
+          <button id="refresh" class="btn secondary">Actualizar</button>
+        </div>
+      </div>
+      <div class="cardBody" id="list"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/assets/common.js"></script>
+  <script src="/assets/kitchen.js"></script>
+</body>
+</html>

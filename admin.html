@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resto Orders — Admin</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Resto Orders</h1>
+        <small>Admin / Caja</small>
+      </div>
+    </div>
+    <div class="pill">
+      <span class="badge" id="netBadge">—</span>
+      <span class="badge" id="meBadge">—</span>
+      <a class="badge" href="/index.html">Cliente</a>
+      <a class="badge" href="/kitchen.html">Cocina</a>
+      <a class="badge" href="/ticket.html">Ticket</a>
+      <button id="logout" class="btn secondary" style="padding:6px 10px">Salir</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Productos + Stock</h2>
+          <div class="controls">
+            <input id="newId" class="input" placeholder="ID (ej: W99)" style="width:120px">
+            <input id="newName" class="input" placeholder="Nombre" style="min-width:220px">
+            <input id="newCat" class="input" placeholder="Categoría" style="width:140px">
+            <input id="newPrice" class="input" placeholder="Precio" style="width:110px" inputmode="decimal">
+            <input id="newStock" class="input" placeholder="Stock" style="width:110px" inputmode="numeric">
+            <button id="addProd" class="btn">Agregar</button>
+            <button id="refresh" class="btn secondary">Actualizar</button>
+          </div>
+        </div>
+        <div class="cardBody" id="menu"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Reportes diarios</h2>
+          <span class="badge" id="storageBadge">—</span>
+        </div>
+        <div class="cardBody">
+          <div class="controls">
+            <input id="repDate" class="input" placeholder="YYYY-MM-DD">
+            <button id="repLoad" class="btn secondary">Cargar</button>
+            <button id="repPrint" class="btn">Imprimir</button>
+          </div>
+          <div style="height:10px"></div>
+          <div id="report" class="muted">Cargando…</div>
+          <hr class="sep">
+          <h3 style="margin:0 0 10px 0;font-size:14px">Promos (JSON)</h3>
+          <textarea id="promos" class="textarea" spellcheck="false"></textarea>
+          <div style="height:10px"></div>
+          <div class="controls">
+            <button id="loadPromos" class="btn secondary">Cargar promos</button>
+            <button id="savePromos" class="btn">Guardar promos</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1 / -1">
+        <div class="cardHeader">
+          <h2>Usuarios (cambiar claves)</h2>
+          <span class="badge">Admin puede cambiar contraseñas</span>
+        </div>
+        <div class="cardBody">
+          <div class="controls">
+            <input id="uUser" class="input" placeholder="Usuario (admin/kitchen/cashier)">
+            <input id="uPass" class="input" placeholder="Nueva contraseña" type="password">
+            <select id="uRole" class="select">
+              <option value="admin">admin</option>
+              <option value="kitchen">kitchen</option>
+              <option value="cashier">cashier</option>
+            </select>
+            <button id="uSave" class="btn">Guardar usuario</button>
+          </div>
+          <div style="height:10px"></div>
+          <div id="users" class="muted">—</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/assets/common.js"></script>
+  <script src="/assets/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ticket — Resto Orders</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <style>
+    @media print {
+      body{ background:#fff; color:#111; }
+      .topbar, .noPrint{ display:none !important; }
+      .card{ box-shadow:none; border:0; background:#fff; }
+      .cardHeader{ border-bottom:1px solid #ddd; }
+    }
+    .ticketBox{
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      background: rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar noPrint">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Resto Orders</h1>
+        <small>Ticket / Impresión</small>
+      </div>
+    </div>
+    <div class="pill">
+      <a class="badge" href="/index.html">Cliente</a>
+      <a class="badge" href="/kitchen.html">Cocina</a>
+      <a class="badge" href="/admin.html">Admin</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card" style="max-width:720px;margin:0 auto">
+      <div class="cardHeader">
+        <h2>Ticket</h2>
+        <span class="badge" id="oid">—</span>
+      </div>
+      <div class="cardBody">
+        <div class="controls noPrint">
+          <input id="orderId" class="input" placeholder="ID pedido (ej: A1B2C3D4E5)">
+          <button id="load" class="btn secondary">Cargar</button>
+          <button id="print" class="btn">Imprimir</button>
+        </div>
+        <div style="height:10px"></div>
+        <div id="out" class="ticketBox">Ingresa un ID y carga el ticket.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast noPrint"></div>
+  <script src="/assets/common.js"></script>
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const preset = qs.get("order") || localStorage.getItem("lastOrderId") || "";
+    $("orderId").value = preset;
+    if(preset) $("oid").textContent = preset;
+
+    function fmtTicket(o){
+      const dt=new Date(o.created_at);
+      const when=dt.toLocaleString();
+      const lines=[];
+      lines.push("RESTAURANTE - TICKET");
+      lines.push("----------------------");
+      lines.push(`Pedido: ${o.id}`);
+      lines.push(`Fecha : ${when}`);
+      if(o.table) lines.push(`Mesa  : ${o.table}`);
+      lines.push(`Canal : ${o.channel}`);
+      if(o.name) lines.push(`Cliente: ${o.name}`);
+      lines.push("----------------------");
+      for(const it of (o.items||[])){
+        lines.push(`${String(it.qty).padStart(2,' ')} x ${it.name}`);
+        lines.push(`    ${money(it.price)}  ->  ${money(it.line)}`);
+      }
+      lines.push("----------------------");
+      lines.push(`Subtotal : ${money(o.subtotal)}`);
+      if((o.promo?.discount||0)>0){
+        lines.push(`Descuento: -${money(o.promo.discount)}`);
+        if((o.promo.labels||[]).length) lines.push(`Promo: ${(o.promo.labels||[]).join(" | ")}`);
+      }
+      lines.push(`TOTAL    : ${money(o.total)}`);
+      lines.push("----------------------");
+      lines.push(`Estado: ${o.status}`);
+      if(o.notes){ lines.push("Notas:"); lines.push(o.notes); }
+      lines.push("");
+      lines.push("¡Gracias por su compra!");
+      return lines.join("\n");
+    }
+
+    async function loadTicket(){
+      const id=$("orderId").value.trim().toUpperCase();
+      if(!id){ toast("Ingresa un ID","bad"); return; }
+      try{
+        const j=await apiGet(`/order?id=${encodeURIComponent(id)}`);
+        const o=j.order;
+        $("oid").textContent=o.id;
+        $("out").textContent=fmtTicket(o);
+        localStorage.setItem("lastOrderId", o.id);
+      }catch(e){ toast(e.message,"bad"); }
+    }
+
+    $("load").addEventListener("click", loadTicket);
+    $("print").addEventListener("click", ()=>window.print());
+    if(preset) loadTicket();
+  </script>
+</body>
+</html>

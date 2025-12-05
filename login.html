@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resto Orders — Login</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Resto Orders</h1>
+        <small>Acceso (Cocina / Admin)</small>
+      </div>
+    </div>
+    <div class="pill">
+      <span id="netBadge" class="badge">—</span>
+      <a class="badge" href="/index.html">Cliente</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card" style="max-width:520px;margin:0 auto">
+      <div class="cardHeader">
+        <h2>Iniciar sesión</h2>
+        <span class="badge">Roles: admin / kitchen / cashier</span>
+      </div>
+      <div class="cardBody">
+        <div class="controls" style="flex-direction:column;align-items:stretch">
+          <input id="u" class="input" placeholder="Usuario (admin / kitchen / cashier)" autocomplete="username">
+          <input id="p" class="input" placeholder="Contraseña" type="password" autocomplete="current-password">
+          <select id="next" class="select">
+            <option value="/kitchen.html">Ir a: Cocina</option>
+            <option value="/admin.html">Ir a: Admin</option>
+          </select>
+          <button id="go" class="btn">Entrar</button>
+          <small class="muted">
+            Demo por defecto: <b>admin/admin</b>, <b>kitchen/kitchen</b>, <b>cashier/cashier</b>.
+            En producción cambia credenciales en Admin.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/assets/common.js"></script>
+  <script>
+    setNetBadge();
+    $("go").addEventListener("click", async ()=>{
+      const username=$("u").value.trim();
+      const password=$("p").value;
+      const next=$("next").value;
+      if(!username || !password){ toast("Completa usuario y contraseña","bad"); return; }
+      try{
+        await apiPost("/auth/login", {username, password});
+        location.href=next;
+      }catch(e){
+        toast(e.message || "Login falló", "bad");
+      }
+    });
+    document.addEventListener("keydown", (e)=>{ if(e.key==="Enter") $("go").click(); });
+  </script>
+</body>
+</html>

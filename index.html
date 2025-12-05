@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Resto Orders — Cliente</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Resto Orders</h1>
+        <small>Pedidos web (PC + Android) • Cliente</small>
+      </div>
+    </div>
+    <div class="pill">
+      <span id="netBadge" class="badge">—</span>
+      <a class="badge" href="/kitchen.html">Cocina</a>
+      <a class="badge" href="/admin.html">Admin</a>
+      <a class="badge" href="/ticket.html">Ticket</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Menú</h2>
+          <div class="controls">
+            <input id="q" class="input" placeholder="Buscar (alitas, papas, inka)…">
+            <select id="cat" class="select"><option value="">Todas</option></select>
+            <button id="refresh" class="btn secondary">Actualizar</button>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div id="menu" class="menuGrid"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHeader">
+          <h2>Tu carrito</h2>
+          <span class="badge" id="promoBadge">Promos: —</span>
+        </div>
+        <div class="cardBody">
+          <div id="cart"></div>
+
+          <div style="height:10px"></div>
+
+          <div class="controls">
+            <input id="name" class="input" placeholder="Tu nombre (opcional)">
+            <input id="table" class="input" placeholder="Mesa / Pedido (ej: M12)">
+            <select id="channel" class="select">
+              <option value="LOCAL">En local</option>
+              <option value="TAKEAWAY">Para llevar</option>
+              <option value="DELIVERY">Delivery</option>
+            </select>
+            <input id="notes" class="input" placeholder="Notas (sin cebolla, +ají…)">
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="totalRow">
+            <div>
+              <small id="subInfo" class="muted">Subtotal: —</small>
+              <div id="discInfo" style="color:var(--orange2); font-weight:800"></div>
+            </div>
+            <div class="total" id="total">S/ 0.00</div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="controls">
+            <button id="place" class="btn">Confirmar pedido</button>
+            <button id="clear" class="btn secondary">Vaciar</button>
+          </div>
+
+          <div style="height:14px"></div>
+          <div class="card" style="border-radius: var(--radius); border:1px solid var(--line)">
+            <div class="cardHeader">
+              <h2>Seguimiento</h2>
+              <span class="badge" id="trackId">—</span>
+            </div>
+            <div class="cardBody">
+              <div class="muted" style="margin-bottom:8px">Tip: tu último pedido se guarda en este dispositivo.</div>
+              <div id="track"></div>
+              <div class="controls" style="margin-top:10px">
+                <button id="openTicket" class="btn secondary">Abrir ticket</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+          <small class="muted">Modo offline: si no hay internet, el pedido se guarda en cola y se envía al volver.</small>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/assets/common.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  </script>
+</body>
+</html>
