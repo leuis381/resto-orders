@@ -1,6 +1,8 @@
 import os, json, time, base64, hashlib, hmac
-from flask import Flask, request, Response
+import os, sys
+sys.path.append(os.path.dirname(__file__))
 
+from flask import Flask, request, Response
 try:
   from api.store import (
     seed_defaults_if_needed, storage_mode,
