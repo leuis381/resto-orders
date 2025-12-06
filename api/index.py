@@ -1,24 +1,17 @@
 import os, json, time, base64, hashlib, hmac
-import os, sys
+import sys
+from flask import Flask, request, Response
+
+# Asegura que se encuentre store.py dentro de /api en Vercel
 sys.path.append(os.path.dirname(__file__))
 
-from flask import Flask, request, Response
-try:
-  from api.store import (
-    seed_defaults_if_needed, storage_mode,
-    get_menu, get_promos, set_promos,
-    list_orders, create_order, get_order, update_status,
-    upsert_product, upsert_user, public_users_view,
-    find_user, daily_report
-  )
-except Exception:
-  from store import (
-    seed_defaults_if_needed, storage_mode,
-    get_menu, get_promos, set_promos,
-    list_orders, create_order, get_order, update_status,
-    upsert_product, upsert_user, public_users_view,
-    find_user, daily_report
-  )
+from store import (
+  seed_defaults_if_needed, storage_mode,
+  get_menu, get_promos, set_promos,
+  list_orders, create_order, get_order, update_status,
+  upsert_product, upsert_user, public_users_view,
+  find_user, daily_report
+)
 
 app = Flask(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me").encode("utf-8")
@@ -37,7 +30,8 @@ def _json(data, status=200):
     },
   )
 
-def _options(): return _json({"ok": True}, 200)
+def _options():
+  return _json({"ok": True}, 200)
 
 def _pbkdf2_hash(password: str, salt: bytes=None, iters: int=120_000):
   if salt is None: salt = os.urandom(16)
@@ -92,13 +86,17 @@ def _require_roles(*roles):
 
 @app.before_request
 def _seed():
+  # Asegura menú + usuarios demo en frío
   seed_defaults_if_needed(_pbkdf2_hash)
 
-@app.route("/api/health", methods=["GET"])
+# ✅ IMPORTANTE: EN VERCEL, /api/ ya lo pone la carpeta "api"
+# Por eso aquí las rutas NO llevan /api
+
+@app.route("/health", methods=["GET"])
 def health():
   return _json({"ok": True, "storage": storage_mode()})
 
-@app.route("/api/auth/login", methods=["POST","OPTIONS"])
+@app.route("/auth/login", methods=["POST","OPTIONS"])
 def login():
   if request.method == "OPTIONS": return _options()
   data = request.get_json(force=True, silent=True) or {}
@@ -114,41 +112,47 @@ def login():
 
   token = _make_session(username, u.get("role","cashier"))
   resp = _json({"ok": True, "user": {"username": username, "role": u.get("role","cashier")}})
-  resp.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="Lax", secure=False, max_age=8*60*60, path="/")
+  resp.set_cookie(
+    SESSION_COOKIE, token,
+    httponly=True, samesite="Lax",
+    secure=True,          # ✅ Vercel usa HTTPS
+    max_age=8*60*60, path="/"
+  )
   return resp
 
-@app.route("/api/auth/logout", methods=["POST","OPTIONS"])
+@app.route("/auth/logout", methods=["POST","OPTIONS"])
 def logout():
   if request.method == "OPTIONS": return _options()
   resp = _json({"ok": True})
   resp.set_cookie(SESSION_COOKIE, "", expires=0, path="/")
   return resp
 
-@app.route("/api/auth/me", methods=["GET"])
+@app.route("/auth/me", methods=["GET"])
 def me():
   ses = _read_session()
   if not ses: return _json({"error":"No autenticado"}, 401)
   return _json({"ok": True, "user": ses})
 
-@app.route("/api/menu", methods=["GET"])
+@app.route("/menu", methods=["GET"])
 def menu():
   return _json({"menu": get_menu()})
 
-@app.route("/api/promos", methods=["GET"])
+@app.route("/promos", methods=["GET"])
 def promos():
   return _json({"promos": get_promos()})
 
-@app.route("/api/orders", methods=["GET"])
+@app.route("/orders", methods=["GET"])
 def orders():
   ses = _require_roles("kitchen","admin","cashier")
   if not ses: return _json({"error":"No autorizado"}, 401)
   status = request.args.get("status","").strip().upper()
   all_orders = list_orders()
-  if status: all_orders = [o for o in all_orders if o.get("status") == status]
+  if status:
+    all_orders = [o for o in all_orders if o.get("status") == status]
   all_orders.sort(key=lambda x: x.get("created_at",0), reverse=True)
   return _json({"orders": all_orders[:200]})
 
-@app.route("/api/order", methods=["GET"])
+@app.route("/order", methods=["GET"])
 def order_get():
   oid = request.args.get("id","").strip().upper()
   if not oid: return _json({"error":"id requerido"}, 400)
@@ -156,7 +160,7 @@ def order_get():
   if not o: return _json({"error":"no encontrado"}, 404)
   return _json({"order": o})
 
-@app.route("/api/order", methods=["POST","OPTIONS"])
+@app.route("/order", methods=["POST","OPTIONS"])
 def order_create():
   if request.method == "OPTIONS": return _options()
   payload = request.get_json(force=True, silent=True) or {}
@@ -164,7 +168,7 @@ def order_create():
   if err: return _json({"error": err}, 400)
   return _json({"order": order}, 201)
 
-@app.route("/api/order/status", methods=["POST","OPTIONS"])
+@app.route("/order/status", methods=["POST","OPTIONS"])
 def order_status():
   if request.method == "OPTIONS": return _options()
   ses = _require_roles("kitchen","admin")
@@ -173,37 +177,38 @@ def order_status():
   oid = str(data.get("id","")).strip().upper()
   st = str(data.get("status","")).strip().upper()
   reason = str(data.get("reason","STATUS")).strip() or "STATUS"
-  if not oid or not st: return _json({"error":"id y status requeridos"}, 400)
+  if not oid or not st:
+    return _json({"error":"id y status requeridos"}, 400)
   updated, err = update_status(oid, st, by=ses["username"], reason=reason)
   if err: return _json({"error": err}, 400)
   return _json({"order": updated})
 
-@app.route("/api/admin/product", methods=["POST","OPTIONS"])
+@app.route("/admin/product", methods=["POST","OPTIONS"])
 def admin_product():
   if request.method == "OPTIONS": return _options()
   ses = _require_roles("admin","cashier")
   if not ses: return _json({"error":"No autorizado"}, 401)
   prod = request.get_json(force=True, silent=True) or {}
-  menu, err = upsert_product(prod)
+  menu2, err = upsert_product(prod)
   if err: return _json({"error": err}, 400)
-  return _json({"ok": True, "menu": menu})
+  return _json({"ok": True, "menu": menu2})
 
-@app.route("/api/admin/promos", methods=["POST","OPTIONS"])
+@app.route("/admin/promos", methods=["POST","OPTIONS"])
 def admin_promos():
   if request.method == "OPTIONS": return _options()
   ses = _require_roles("admin","cashier")
   if not ses: return _json({"error":"No autorizado"}, 401)
-  promos = request.get_json(force=True, silent=True) or {}
-  set_promos(promos)
-  return _json({"ok": True, "promos": promos})
+  promos2 = request.get_json(force=True, silent=True) or {}
+  set_promos(promos2)
+  return _json({"ok": True, "promos": promos2})
 
-@app.route("/api/admin/users", methods=["GET"])
+@app.route("/admin/users", methods=["GET"])
 def admin_users():
   ses = _require_roles("admin")
   if not ses: return _json({"error":"No autorizado"}, 401)
   return _json({"users": public_users_view()})
 
-@app.route("/api/admin/user", methods=["POST","OPTIONS"])
+@app.route("/admin/user", methods=["POST","OPTIONS"])
 def admin_user():
   if request.method == "OPTIONS": return _options()
   ses = _require_roles("admin")
@@ -213,13 +218,15 @@ def admin_user():
   if err: return _json({"error": err}, 400)
   return _json({"ok": True, "users": public_users_view()})
 
-@app.route("/api/admin/report", methods=["GET"])
+@app.route("/admin/report", methods=["GET"])
 def admin_report():
   ses = _require_roles("admin","cashier")
   if not ses: return _json({"error":"No autorizado"}, 401)
   date = request.args.get("date","").strip()
   tz = request.args.get("tz","0").strip()
-  try: tz_minutes = int(tz)
-  except Exception: tz_minutes = 0
+  try:
+    tz_minutes = int(tz)
+  except Exception:
+    tz_minutes = 0
   rep = daily_report(date, tz_minutes=tz_minutes)
   return _json({"storage": storage_mode(), "report": rep})
